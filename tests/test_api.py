@@ -251,7 +251,7 @@ class TestApi(unittest.TestCase):
 
 
             testing = pycrest.EVE(testing=True)
-            self.assertEqual(testing._public_endpoint, "http://public-crest-sisi.testeveonline.com/")
+            self.assertEqual(testing._endpoint, "https://api-sisi.testeveonline.com/")
 
     def test_headers(self):
         _self = self

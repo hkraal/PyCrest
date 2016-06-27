@@ -107,7 +107,7 @@ class APIConnection(object):
             "Accept": "application/json",
         })
         session.headers.update(additional_headers)
-        session.mount('https://public-crest.eveonline.com',
+        session.mount('https://crest-tq.eveonline.com',
                 WeakCiphersAdapter())
         self._session = session
         if cache:
@@ -182,16 +182,13 @@ class EVE(APIConnection):
         self.client_id = kwargs.pop('client_id', None)
         self.redirect_uri = kwargs.pop('redirect_uri', None)
         if kwargs.pop('testing', False):
-            self._public_endpoint = "http://public-crest-sisi.testeveonline.com/"
-            self._authed_endpoint = "https://api-sisi.testeveonline.com/"
+            self._endpoint = "https://api-sisi.testeveonline.com/"
             self._image_server = "https://image.testeveonline.com/"
             self._oauth_endpoint = "https://sisilogin.testeveonline.com/oauth"
         else:
-            self._public_endpoint = "https://public-crest.eveonline.com/"
-            self._authed_endpoint = "https://crest-tq.eveonline.com/"
+            self._endpoint = "https://crest-tq.eveonline.com/"
             self._image_server = "https://image.eveonline.com/"
             self._oauth_endpoint = "https://login.eveonline.com/oauth"
-        self._endpoint = self._public_endpoint
         self._cache = {}
         self._data = None
         APIConnection.__init__(self, **kwargs)
@@ -225,7 +222,7 @@ class EVE(APIConnection):
     def authorize(self, code):
         res = self._authorize(params={"grant_type": "authorization_code", "code": code})
         return AuthedConnection(res,
-                                self._authed_endpoint,
+                                self._endpoint,
                                 self._oauth_endpoint,
                                 self.client_id,
                                 self.api_key,
@@ -236,7 +233,7 @@ class EVE(APIConnection):
         return AuthedConnection({'access_token': res['access_token'],
                                  'refresh_token': refresh_token,
                                  'expires_in': res['expires_in']},
-                                self._authed_endpoint,
+                                self._endpoint,
                                 self._oauth_endpoint,
                                 self.client_id,
                                 self.api_key,
@@ -246,7 +243,7 @@ class EVE(APIConnection):
         return AuthedConnection({'access_token': access_token,
                                  'refresh_token': refresh_token,
                                  'expires_in': expires_in},
-                                self._authed_endpoint,
+                                self._endpoint,
                                 self._oauth_endpoint,
                                 self.client_id,
                                 self.api_key,

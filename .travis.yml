@@ -4,10 +4,13 @@ python:
   - "2.7"
   - "3.3"
   - "3.4"
+  - "3.5"
   - "pypy"
-install: pip install coveralls testtools mock https://github.com/Dreae/httmock/archive/master.zip
+install:
+  - pip install .
+  - pip install -r requirements.txt
 script: coverage run setup.py test
 after_success: coveralls
 notifications:
   email:
-    - dreae@dreae.me
+    - hkraal@users.noreply.github.com

@@ -18,7 +18,7 @@ class TestWeakCiphers(unittest.TestCase):
         self.session = session
 
     def test_public_crest(self):
-        resp = self.session.get("https://public-crest.eveonline.com")
+        resp = self.session.get("https://crest-tq.eveonline.com")
         self.assertIsNotNone(resp)
 
     def test_http(self):
