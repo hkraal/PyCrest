@@ -115,10 +115,26 @@ class TestAPIConnection(unittest.TestCase):
 #             eve()
 #         print(object_function.call_count)
 
-    @mock.patch('pycrest.eve.requests.session')
-    def test_get(self, session_function):
+    def test_parse_parameters_default(self):
         eve = EVE()
-        eve()
+        r = eve._parse_parameters(
+            resource=eve._endpoint,
+            params={})
+        self.assertEqual(r, {})
+
+    def test_parse_parameters_url(self):
+        eve = EVE()
+        r = eve._parse_parameters(
+            resource='https://crest-tq.eveonline.com/?key=value1',
+            params={})
+        self.assertEqual(r, {'key': 'value1'})
+
+    def test_parse_parameters_override(self):
+        eve = EVE()
+        r = eve._parse_parameters(
+            resource='https://crest-tq.eveonline.com/?key=value1',
+            params=dict(key='value2'))
+        self.assertEqual(r, {'key': 'value2'})
 
 
 class TestAPICache(unittest.TestCase):

@@ -121,11 +121,16 @@ class APIConnection(object):
         else:
             self.cache = DictCache()
 
-    def get(self, resource, params=None):
-        logger.debug('Getting resource %s', resource)
-        if params is None:
-            params = {}
-
+    def _parse_parameters(self, resource, params):
+        '''Creates a dictionary from query_string and `params`
+        
+        Transforms the `?key=value&...` to a {'key': 'value'} and adds
+        (or overwrites if already present) the value with the dictionary in 
+        `params`.
+        '''
+        assert isinstance(resource, str)
+        assert isinstance(params, dict)
+        
         # remove params from resource URI (needed for paginated stuff)
         parsed_uri = urlparse(resource)
         qs = parsed_uri.query
@@ -137,7 +142,12 @@ class APIConnection(object):
         # params supplied to self.get() override parsed params
         for key in params:
             prms[key] = params[key]
+        return prms
 
+    def get(self, resource, params={}):
+        logger.debug('Getting resource %s', resource)
+        prms = self._parse_parameters(resource, params)
+        
         # check cache
         key = (resource, frozenset(self._session.headers.items()), frozenset(prms.items()))
         cached = self.cache.get(key)
