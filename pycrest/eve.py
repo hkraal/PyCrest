@@ -6,7 +6,6 @@ import zlib
 from pycrest import version
 from pycrest.compat import bytes_, text_
 from pycrest.errors import APIException
-from pycrest.weak_ciphers import WeakCiphersAdapter
 
 try:
     from urllib.parse import urlparse, urlunparse, parse_qsl
@@ -47,12 +46,15 @@ class FileCache(APICache):
         if not os.path.isdir(self.path):
             os.mkdir(self.path, 0o700)
 
-    def _getpath(self, key):
+    def _getpath(self, key):    # pragma: no cover
         return os.path.join(self.path, str(hash(key)) + '.cache')
 
     def put(self, key, value):
         with open(self._getpath(key), 'wb') as f:
-            f.write(zlib.compress(pickle.dumps(value, -1)))
+            f.write(
+                zlib.compress(
+                    pickle.dumps(value,
+                                 pickle.HIGHEST_PROTOCOL)))
         self._cache[key] = value
 
     def get(self, key):
@@ -65,7 +67,7 @@ class FileCache(APICache):
         except IOError as ex:
             if ex.errno == 2:  # file does not exist (yet)
                 return None
-            else:
+            else:   # pragma: no cover
                 raise
 
     def invalidate(self, key):
@@ -76,7 +78,7 @@ class FileCache(APICache):
         except OSError as ex:
             if ex.errno == 2:  # does not exist
                 pass
-            else:
+            else:   # pragma: no cover
                 raise
 
 

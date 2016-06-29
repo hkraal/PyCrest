@@ -3,17 +3,24 @@ Created on Jun 27, 2016
 
 @author: henk
 '''
-import os
 import sys
 from pycrest.eve import EVE, DictCache, APICache, FileCache
 import httmock
 import pycrest
 import mock
+import errno
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
     import unittest
+
+try:
+    import __builtin__
+    builtins_name = __builtin__.__name__
+except ImportError:
+    import builtins
+    builtins_name = builtins.__name__
 
 
 class TestApi(unittest.TestCase):
@@ -45,7 +52,7 @@ class TestAPIConnection(unittest.TestCase):
             self.assertEqual(user_agent, 'PyCrest/{0} +https://github.com/pycrest/PyCrest'.format(pycrest.version))
 
         with httmock.HTTMock(default_user_agent):
-            eve = EVE()
+            EVE()
 
         @httmock.all_requests
         def customer_user_agent(url, request):
@@ -53,7 +60,7 @@ class TestAPIConnection(unittest.TestCase):
             self.assertEqual(user_agent, 'PyCrest-Testing/{0} +https://github.com/pycrest/PyCrest'.format(pycrest.version))
 
         with httmock.HTTMock(customer_user_agent):
-            eve = EVE(user_agent='PyCrest-Testing/{0} +https://github.com/pycrest/PyCrest'.format(pycrest.version))
+            EVE(user_agent='PyCrest-Testing/{0} +https://github.com/pycrest/PyCrest'.format(pycrest.version))
 
     def test_headers(self):
 
@@ -63,16 +70,14 @@ class TestAPIConnection(unittest.TestCase):
             self.assertNotIn('PyCrest-Testing', request.headers)
 
         with httmock.HTTMock(check_default_headers):
-            eve = EVE()
-            eve()
+            EVE()
 
         # Check custom header
         def check_custom_headers(url, request):
             self.assertIn('PyCrest-Testing', request.headers)
 
         with httmock.HTTMock(check_custom_headers):
-            eve = EVE(additional_headers={'PyCrest-Testing': True})
-            eve()
+            EVE(additional_headers={'PyCrest-Testing': True})
 
     def test_default_cache(self):
         self.assertTrue(isinstance(self.api.cache, DictCache))
@@ -93,6 +98,22 @@ class TestAPIConnection(unittest.TestCase):
         eve = EVE(cache_dir=TestFileCache.DIR)
         self.assertEqual(eve.cache_dir, TestFileCache.DIR)
         self.assertTrue(isinstance(eve.cache, FileCache))
+
+#     @mock.patch.object(requests.Session, 'get')
+#     def test_cache_primer(self, object_function):
+# 
+#         @httmock.all_requests
+#         def get_content(url, request):
+#             headers = {'content-type': 'application/json',
+#                        'Cache-Control': 'max-age=300'}
+#             content = '{"key": "value"}'
+#             return httmock.response(200, content, headers, None, 5, request)
+# 
+#         eve = EVE()
+#         print(object_function.call_count)
+#         with httmock.HTTMock(get_content):
+#             eve()
+#         print(object_function.call_count)
 
 
 class TestAPICache(unittest.TestCase):
@@ -141,8 +162,10 @@ class TestFileCache(unittest.TestCase):
 
     @mock.patch('os.path.isdir')
     @mock.patch('os.mkdir')
-    def setUp(self, mkdir_function, isdir_function):
+    @mock.patch('{0}.open'.format(builtins_name))
+    def setUp(self, open_function, mkdir_function, isdir_function):
         self.c = FileCache(TestFileCache.DIR)
+        self.c.put('key', 'value')
 
     @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.mkdir')
@@ -163,6 +186,34 @@ class TestFileCache(unittest.TestCase):
 #     @unittest.skip("https://github.com/pycrest/PyCrest/issues/4")
 #     def test_getpath(self):
 #         self.assertEqual(self.c._getpath('key'), os.path.join(TestFileCache.DIR, '1140801208126482496.cache'))
+
+    def test_get_uncached(self):
+        # Check non-existant key
+        self.assertIsNone(self.c.get('nope'))
+
+    @mock.patch('builtins.open')
+    def test_get_cached(self, open_function):
+        self.assertEqual(self.c.get('key'), 'value')
+
+    @mock.patch('builtins.open', mock.mock_open(read_data=b'x\x9ck`\x8e`e``(K\xcc)M-d\xd0\x03\x00\x1a\xaa\x03\x9d'))
+    def test_get_cached_file(self):
+        del(self.c._cache['key'])
+        self.assertEqual(self.c.get('key'), 'value')
+
+    @mock.patch('os.unlink')
+    def test_invalidate(self, unlink_function):
+        # Make sure our key is here in the first place
+        self.assertIn('key', self.c._cache)
+
+        # Unset the key and ensure unlink() was called
+        self.c.invalidate('key')
+        self.assertTrue(unlink_function.called)
+        # TODO: When paths are predictable check the args
+        #   See https://github.com/pycrest/PyCrest/issues/4
+
+    @mock.patch('os.unlink', side_effect=OSError(errno.ENOENT, 'No such file or directory'))
+    def test_unlink_exception(self, unlink_function):
+        self.assertIsNone(self.c.invalidate('key'))
 
 if __name__ == "__main__":
     unittest.main()
