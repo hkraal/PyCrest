@@ -115,6 +115,11 @@ class TestAPIConnection(unittest.TestCase):
 #             eve()
 #         print(object_function.call_count)
 
+    @mock.patch('pycrest.eve.requests.session')
+    def test_get(self, session_function):
+        eve = EVE()
+        eve()
+
 
 class TestAPICache(unittest.TestCase):
 
