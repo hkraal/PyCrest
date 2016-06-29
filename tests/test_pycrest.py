@@ -9,6 +9,7 @@ import httmock
 import pycrest
 import mock
 import errno
+import requests.sessions
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest
@@ -115,11 +116,17 @@ class TestAPIConnection(unittest.TestCase):
 #             eve()
 #         print(object_function.call_count)
 
-    def test_parse_parameters_default(self):
+    def test_default_url(self):
         eve = EVE()
-        r = eve._parse_parameters(
-            resource=eve._endpoint,
-            params={})
+        
+        @httmock.all_requests
+        def root_mock(url, request):
+            print(url)
+            return request
+            
+        with httmock.HTTMock(root_mock):
+            print(eve().content)
+        
         self.assertEqual(r, {})
 
     def test_parse_parameters_url(self):
@@ -135,6 +142,21 @@ class TestAPIConnection(unittest.TestCase):
             resource='https://crest-tq.eveonline.com/?key=value1',
             params=dict(key='value2'))
         self.assertEqual(r, {'key': 'value2'})
+
+#     @mock.patch.object(pycrest.eve.requests.sessions.Session,
+#                        'get',
+#                        side_effect=httmock.response(200,
+#                                                     '{"key": "value"}'))
+    def test_session_mock(self):
+        # Check default header
+        @httmock.all_requests
+        def check_address(url, request):
+            print(url)
+            print(request.__dict__)
+
+        eve = EVE()
+        with httmock.HTTMock(check_address):
+            eve()
 
 
 class TestAPICache(unittest.TestCase):

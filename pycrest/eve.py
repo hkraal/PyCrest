@@ -160,7 +160,7 @@ class APIConnection(object):
         else:
             logger.debug('Cache miss for resource %s (params=%s', resource, prms)
 
-        logger.debug('Getting resource %s (params=%s)', resource, prms)
+#         logger.debug('Getting resource %s (params=%s)', resource, prms)
         res = self._session.get(resource, params=prms)
         if res.status_code != 200:
             raise APIException("Got unexpected status code from server: %i" % res.status_code)
