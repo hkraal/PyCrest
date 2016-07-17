@@ -118,7 +118,7 @@ class TestEVE(unittest.TestCase):
             'https://crest-tq.eveonline.com/')
         self.assertEqual(
             self.api._image_server,
-            'https://image.eveonline.com/')
+            'https://imageserver.eveonline.com/')
         self.assertEqual(
             self.api._oauth_endpoint,
             'https://login.eveonline.com/oauth')
@@ -128,6 +128,8 @@ class TestEVE(unittest.TestCase):
         self.assertEqual(
             api._endpoint,
             'https://api-sisi.testeveonline.com/')
+        # imageserver. is given an 302 redirect to image. on testeveonline.com
+        #   we might just as well keep using the old URL for now
         self.assertEqual(
             api._image_server,
             'https://image.testeveonline.com/')
