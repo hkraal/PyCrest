@@ -444,8 +444,9 @@ class APIObject(object):
         if item in self._dict:
             return self._dict[item]
 
-        if isinstance(self._dict['result'], APIObject):
-            return self._dict['result'].__getattr__(item)
+        if 'result' in self._dict:
+            if isinstance(self._dict['result'], APIObject):
+                return self._dict['result'].__getattr__(item)
 
         raise AttributeError(item)
 
