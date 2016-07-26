@@ -221,9 +221,10 @@ class APIConnection(object):
                 prms.items()))
         expires = self._get_expires(res)
         response = {'result': ret,
+                    'endpoint_version': res.headers['content-type'].split(';')[0],
                     'status_code': res.status_code,
-                    'expires': expires,
-                    'timestamp': time.time() + expires}
+                    'expires_in': expires,
+                    'expires_at': time.time() + expires}
 
         if expires > 0:
             self.cache.put(
