@@ -220,12 +220,17 @@ class APIConnection(object):
                 self._session.headers.items()), frozenset(
                 prms.items()))
         expires = self._get_expires(res)
+        response = {'result': ret,
+                    'status_code': res.status_code,
+                    'expires': expires,
+                    'timestamp': time.time() + expires}
+
         if expires > 0:
             self.cache.put(
                 key, {
-                    'expires': time.time() + expires, 'payload': ret})
+                    'expires': time.time() + expires, 'payload': response})
 
-        return ret
+        return response 
 
     #post is not idempotent so there should be no caching
     def post(self, resource, data={}):
@@ -406,12 +411,15 @@ class AuthedConnection(EVE):
             self.refresh()
         return super(self.__class__, self).get(resource, params)
 
+
 class APIObject(object):
 
     def __init__(self, parent, connection):
         self._dict = {}
         self.connection = connection
         for k, v in parent.items():
+            if k == 'result':
+                v = parent[k]
             if isinstance(v, dict):
                 self._dict[k] = APIObject(v, connection)
             elif isinstance(v, list):
@@ -431,11 +439,14 @@ class APIObject(object):
         return new
 
     def __getattr__(self, item):
+        # Try to get the property from the dictionary first
         if item in self._dict:
             return self._dict[item]
+
+        if isinstance(self._dict['result'], APIObject):
+            return self._dict['result'].__getattr__(item)
+
         raise AttributeError(item)
-
-
 
     def __call__(self, **kwargs):
         """carries out a CREST request
