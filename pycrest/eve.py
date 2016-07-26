@@ -418,6 +418,7 @@ class APIObject(object):
         self._dict = {}
         self.connection = connection
         for k, v in parent.items():
+            # If we don't "pull in" 'result' it will cause the creation of an unwanted APIObject
             if k == 'result':
                 v = parent[k]
             if isinstance(v, dict):
