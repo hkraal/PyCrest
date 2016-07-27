@@ -465,7 +465,10 @@ class APIObject(object):
             return self._dict[item]
         raise AttributeError(item)
 
-
+    def __getitem__(self, item):
+        if item in self._response:
+            return self._response[item]
+        raise AttributeError(item)
 
     def __call__(self, **kwargs):
         """carries out a CREST request
