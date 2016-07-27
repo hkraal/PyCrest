@@ -461,11 +461,19 @@ class APIObject(object):
         return new
 
     def __getattr__(self, item):
+        '''Returns CREST property
+        
+        When calling `x().name` return `self._dict['name']` if present
+        '''
         if item in self._dict:
             return self._dict[item]
         raise AttributeError(item)
 
     def __getitem__(self, item):
+        '''Returns Response property
+        
+        When calling `x()['name']` return `self._response['name']` if present
+        '''
         if item in self._response:
             return self._response[item]
         raise AttributeError(item)
