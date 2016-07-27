@@ -216,20 +216,24 @@ class APIConnection(object):
                 )
                 
 
-        ret = res.json()
-
         # cache result
         key = (
             resource, frozenset(
                 self._session.headers.items()), frozenset(
                 prms.items()))
         expires = self._get_expires(res)
+        response = {'content': res.json(),
+                    'endpoint_version': res.headers['content-type'].split(';')[0] if 'content-type' in res.headers else None,
+                    'status_code': res.status_code,
+                    'expires_in': expires,
+                    'expires_at': time.time() + expires}
+
         if expires > 0:
             self.cache.put(
                 key, {
-                    'expires': time.time() + expires, 'payload': ret})
+                    'expires': time.time() + expires, 'payload': response})
 
-        return ret
+        return response
 
     #post is not idempotent so there should be no caching
     def post(self, resource, data={}):
