@@ -433,8 +433,15 @@ class APIObject(object):
 
     def __init__(self, parent, connection):
         self._dict = {}
+        self._response = {}
+        if 'content' in parent:
+            content = parent['content']
+            self._response = parent
+        else:
+            content = parent
+
         self.connection = connection
-        for k, v in parent.items():
+        for k, v in content.items():
             if isinstance(v, dict):
                 self._dict[k] = APIObject(v, connection)
             elif isinstance(v, list):
