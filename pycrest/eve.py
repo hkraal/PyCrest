@@ -44,8 +44,8 @@ class APICache(object):
     def _hash(self, data):
         h = hashlib.new('md5')
         h.update(pickle.dumps(data))
-        #prefix allows possibility of multiple applications 
-        #sharing same keyspace
+        # prefix allows possibility of multiple applications
+        # sharing same keyspace
         return 'pyc_' + h.hexdigest()
 
 
@@ -235,7 +235,7 @@ class APIConnection(object):
 
         return response
 
-    #post is not idempotent so there should be no caching
+    # post is not idempotent so there should be no caching
     def post(self, resource, data={}):
         logger.debug('Posting resource %s (data=%s)', resource, data)
         res = self._session.post(resource, data=data)
@@ -245,10 +245,9 @@ class APIConnection(object):
                 res.status_code,
                 res.json()
                 )
-
         return {}
 
-    #put is not idempotent so there should be no caching
+    # put is not idempotent so there should be no caching
     def put(self, resource, data={}):
         logger.debug('Putting resource %s (data=%s)', resource, data)
         res = self._session.put(resource, data=data)
@@ -258,10 +257,9 @@ class APIConnection(object):
                 res.status_code,
                 res.json()
                 )
-
         return {}
 
-    #delete is not idempotent so there should be no caching
+    # delete is not idempotent so there should be no caching
     def delete(self, resource):
         logger.debug('Deleting resource %s', resource)
         res = self._session.delete(resource)
@@ -271,7 +269,6 @@ class APIConnection(object):
                 res.status_code,
                 res.json()
                 )
-
         return {}
 
     def _get_expires(self, response):
@@ -429,6 +426,7 @@ class AuthedConnection(EVE):
             self.refresh()
         return super(self.__class__, self).get(resource, params)
 
+
 class APIObject(object):
 
     def __init__(self, parent, connection):
@@ -462,7 +460,7 @@ class APIObject(object):
 
     def __getattr__(self, item):
         '''Returns CREST property
-        
+
         When calling `x().name` return `self._dict['name']` if present
         '''
         if item in self._dict:
@@ -471,7 +469,7 @@ class APIObject(object):
 
     def __getitem__(self, item):
         '''Returns Response property
-        
+
         When calling `x()['name']` return `self._response['name']` if present
         '''
         if item in self._response:
@@ -489,31 +487,48 @@ class APIObject(object):
         data contains any arguments that will be passed with the request -
             it could be a dictionary which contains parameters
             and is passed via the url for 'get' requests and as form-encoded
-            data for 'post' or 'put' requests. It could also be a string if 
-            another format of data (e.g. via json.dumps()) must be passed in 
+            data for 'post' or 'put' requests. It could also be a string if
+            another format of data (e.g. via json.dumps()) must be passed in
             a 'post' or 'put' request. This parameter has no effect on
             'delete' requests.
         """
 
         # Caching is now handled by APIConnection
         if 'href' in self._dict:
-            method = kwargs.pop('method', 'get')#default to get: historic behaviour
+            # default to get: historic behaviour
+            method = kwargs.pop('method', 'get')
             data = kwargs.pop('data', {})
 
-            #retain compatibility with historic method of passing parameters.
-            #Slightly unsatisfactory - what if data is dict-like but not a dict?
+            # retain compatibility with historic method of passing parameters.
+            # Slightly unsatisfactory - what if data is dict-like but not a
+            # dict?
             if isinstance(data, dict):
-                for arg in kwargs: 
+                for arg in kwargs:
                     data[arg] = kwargs[arg]
 
             if method == 'post':
-                return APIObject(self.connection.post(self._dict['href'], data=data), self.connection)
+                return APIObject(
+                    self.connection.post(
+                        self._dict['href'],
+                        data=data),
+                    self.connection)
             elif method == 'put':
-                return APIObject(self.connection.put(self._dict['href'], data=data), self.connection)
+                return APIObject(
+                    self.connection.put(
+                        self._dict['href'],
+                        data=data),
+                    self.connection)
             elif method == 'delete':
-                return APIObject(self.connection.delete(self._dict['href'] ), self.connection)
-            elif method == 'get': 
-                return APIObject(self.connection.get(self._dict['href'], params=data), self.connection)
+                return APIObject(
+                    self.connection.delete(
+                        self._dict['href']),
+                    self.connection)
+            elif method == 'get':
+                return APIObject(
+                    self.connection.get(
+                        self._dict['href'],
+                        params=data),
+                    self.connection)
             else:
                 raise UnsupportedHTTPMethodException(method)
         else:
