@@ -188,18 +188,6 @@ class TestEVE(unittest.TestCase):
                                          expires_in=300,
                                          refresh_token='refresh_token')
 
-    def test_status_code(self):
-        with httmock.HTTMock(*all_httmocks):
-            self.assertEqual(self.api()['status_code'], 200)
-
-    def test_expires_in(self):
-        with httmock.HTTMock(*all_httmocks):
-            self.assertEqual(self.api()['expires_in'], 300)
-
-    def test_version(self):
-        with httmock.HTTMock(*all_httmocks):
-            self.assertEqual(self.api()['version'], 5)
-
 
 class TestAuthedConnection(unittest.TestCase):
 
@@ -586,6 +574,18 @@ class TestAPIObject(unittest.TestCase):
             getattr,
             self.api,
             "invalid_property")
+
+    def test_getitem_status_code(self):
+        with httmock.HTTMock(*all_httmocks):
+            self.assertEqual(self.api()['status_code'], 200)
+
+    def test_getitem_expires_in(self):
+        with httmock.HTTMock(*all_httmocks):
+            self.assertEqual(self.api()['expires_in'], 300)
+
+    def test_getitem_version(self):
+        with httmock.HTTMock(*all_httmocks):
+            self.assertEqual(self.api()['version'], 5)
 
     def test_call(self):
         with httmock.HTTMock(*all_httmocks):
