@@ -57,18 +57,19 @@ def root_mock(url, request):
             "item3"
         ]
     ]
-}''', headers={"Cache-Control": "private, max-age=300"})
-
+}''', headers={"Cache-Control": "private, max-age=300",
+               "Content-Type": "application/vnd.ccp.eve.Api-v5+json; charset=utf-8"})
 
 @httmock.urlmatch(
     scheme="https",
     netloc=r"(sisilogin\.test)?(login\.)?eveonline\.com$",
     path=r"^/oauth/verify/?$")
 def verify_mock(url, request):
-    return {
-        "status_code": 200,
-        "content": {"CharacterName": "Foobar"},
-    }
+    return httmock.response(
+        status_code=200,
+        content='''{"CharacterName": "Foobar"}''',
+        headers={"Content-Type": "application/vnd.ccp.eve.Api-v5+json; charset=utf-8"})
+
 
 
 @httmock.all_requests
