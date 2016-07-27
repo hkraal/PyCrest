@@ -28,6 +28,7 @@ import re
 
 logger = logging.getLogger("pycrest.eve")
 cache_re = re.compile(r'max-age=([0-9]+)')
+endpoint_version_re = re.compile(r'^application\/vnd\.ccp\.eve\.[a-zA-Z]+-v([0-9]+)\+')
 
 
 class APICache(object):
@@ -179,6 +180,14 @@ class APIConnection(object):
             prms[key] = params[key]
         return resource, prms
 
+    def _parse_endpoint_version(self, headers):
+        if 'content-type' not in headers:
+            return None
+        match = endpoint_version_re.search(headers['Content-Type'])
+        if match:
+            return int(match.group(1))
+        return None
+
     def get(self, resource, params={}):
         logger.debug('Getting resource %s', resource)
         resource, prms = self._parse_parameters(resource, params)
@@ -222,11 +231,12 @@ class APIConnection(object):
                 self._session.headers.items()), frozenset(
                 prms.items()))
         expires = self._get_expires(res)
-        response = {'content': res.json(),
-                    'endpoint_version': res.headers['content-type'].split(';')[0] if 'content-type' in res.headers else None,
-                    'status_code': res.status_code,
-                    'expires_in': expires,
-                    'expires_at': time.time() + expires}
+        response = {
+            'content': res.json(),
+            'version': self._parse_endpoint_version(res.headers),
+            'status_code': res.status_code,
+            'expires_in': expires,
+            'expires_at': time.time() + expires}
 
         if expires > 0:
             self.cache.put(
