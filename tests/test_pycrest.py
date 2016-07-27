@@ -569,11 +569,8 @@ class TestAPIObject(unittest.TestCase):
         self.assertEqual(res[0], 'item1')
 
     def test_getattr_exception(self):
-        self.assertRaises(
-            AttributeError,
-            getattr,
-            self.api,
-            "invalid_property")
+        with self.assertRaises(AttributeError):
+            self.api()['404-not-found']
 
     def test_getitem_status_code(self):
         with httmock.HTTMock(*all_httmocks):
