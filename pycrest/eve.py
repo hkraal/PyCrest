@@ -235,6 +235,7 @@ class APIConnection(object):
             'content': res.json(),
             'version': self._parse_endpoint_version(res.headers),
             'status_code': res.status_code,
+            'cached_at': time.time(),
             'expires_in': expires,
             'expires_at': time.time() + expires}
 
