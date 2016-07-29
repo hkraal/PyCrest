@@ -416,10 +416,8 @@ class AuthedConnection(EVE):
 
     def whoami(self):
         if 'whoami' not in self._cache:
-            self._cache['whoami'] = APIObject(
-                self.get("%s/verify" % self._oauth_endpoint),
-                {})
-        return self._cache['whoami']
+            self._cache['whoami'] = self.get("%s/verify" % self._oauth_endpoint)
+        return self._cache['whoami']['content']
 
     def refresh(self):
         res = self._authorize(

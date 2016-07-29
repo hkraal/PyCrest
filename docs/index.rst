@@ -131,9 +131,9 @@ on an authorized connection:
 >>> user = con.whoami()
 >>> user
 {'Scopes': 'publicData', 'CharacterName': 'Dreae', ...}
->>> user.Scopes
-'publicData'
->>> user.CharacterName
+>>> user['Scopes']
+'publicData '
+>>> user['CharacterName']
 'Dreae'
 
 .. highlight:: none
