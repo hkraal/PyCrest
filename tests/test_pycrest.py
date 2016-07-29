@@ -582,7 +582,7 @@ class TestAPIObject(unittest.TestCase):
 
     def test_getitem_version(self):
         with httmock.HTTMock(*all_httmocks):
-            self.assertEqual(self.api()['version'], 5)
+            self.assertEqual(self.api()['version'], 'application/vnd.ccp.eve.Api-v5')
 
     def test_call(self):
         with httmock.HTTMock(*all_httmocks):

@@ -28,7 +28,7 @@ import re
 
 logger = logging.getLogger("pycrest.eve")
 cache_re = re.compile(r'max-age=([0-9]+)')
-endpoint_version_re = re.compile(r'^application\/vnd\.ccp\.eve\.[a-zA-Z]+-v([0-9]+)\+')
+endpoint_version_re = re.compile(r'^(application\/vnd\.ccp\.eve\.[a-zA-Z]+-v[0-9]+)\+')
 
 
 class APICache(object):
@@ -185,7 +185,7 @@ class APIConnection(object):
             return None
         match = endpoint_version_re.search(headers['Content-Type'])
         if match:
-            return int(match.group(1))
+            return match.group(1)
         return None
 
     def get(self, resource, params={}):
