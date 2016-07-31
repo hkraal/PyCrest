@@ -128,6 +128,67 @@ class MemcachedCache(APICache):
         return self._mc.delete(self._hash(key))
 
 
+class APIResponse(object):
+
+    def __init__(self, response):
+        '''
+
+        :param response: requests.Response object
+        '''
+        assert isinstance(response, requests.Response)
+
+        self._response = response
+        self.cached_at = time.time()
+
+    def __getitem__(self, item):
+        if hasattr(self, item):
+            return self.__getattribute__(item)
+        raise AttributeError(item)
+
+    @property
+    def content(self):
+        return self._response.json()
+
+    @property
+    def status_code(self):
+        return self._response.status_code
+
+    @property
+    def expires_at(self):
+        return self.cached_at + self.expires_in
+
+    @property
+    def expires_in(self):
+        return self._get_expires(self.headers)
+
+    @property
+    def headers(self):
+        return self._response.headers
+
+    @property
+    def version(self):
+        return self._parse_endpoint_version(self.headers)
+
+    def _parse_endpoint_version(self, headers):
+        if 'content-type' not in headers:
+            return None
+        match = endpoint_version_re.search(headers['Content-Type'])
+        if match:
+            return match.group(1)
+        return None
+
+    def _get_expires(self, headers):
+        if 'Cache-Control' not in headers:
+            return 0
+        if any([s in headers['Cache-Control']
+                for s in ['no-cache', 'no-store']]):
+            return 0
+        match = cache_re.search(headers['Cache-Control'])
+        if match:
+            return int(match.group(1))
+        return 0
+
+
 class APIConnection(object):
 
     def __init__(
@@ -180,14 +241,6 @@ class APIConnection(object):
             prms[key] = params[key]
         return resource, prms
 
-    def _parse_endpoint_version(self, headers):
-        if 'content-type' not in headers:
-            return None
-        match = endpoint_version_re.search(headers['Content-Type'])
-        if match:
-            return match.group(1)
-        return None
-
     def get(self, resource, params={}):
         logger.debug('Getting resource %s', resource)
         resource, prms = self._parse_parameters(resource, params)
@@ -198,7 +251,7 @@ class APIConnection(object):
                 self._session.headers.items()), frozenset(
                 prms.items()))
         cached = self.cache.get(key)
-        if cached and cached['expires'] > time.time():
+        if cached and cached['expires_at'] > time.time():
             logger.debug(
                 'Cache hit for resource %s (params=%s)',
                 resource,
@@ -230,19 +283,13 @@ class APIConnection(object):
             resource, frozenset(
                 self._session.headers.items()), frozenset(
                 prms.items()))
-        expires = self._get_expires(res)
-        response = {
-            'content': res.json(),
-            'version': self._parse_endpoint_version(res.headers),
-            'status_code': res.status_code,
-            'cached_at': time.time(),
-            'expires_in': expires,
-            'expires_at': time.time() + expires}
 
-        if expires > 0:
+        response = APIResponse(res)
+
+        if response.expires_in > 0:
             self.cache.put(
                 key, {
-                    'expires': time.time() + expires, 'payload': response})
+                    'expires_at': response.expires_at, 'payload': response})
 
         return response
 
@@ -281,17 +328,6 @@ class APIConnection(object):
                 res.json()
                 )
         return {}
-
-    def _get_expires(self, response):
-        if 'Cache-Control' not in response.headers:
-            return 0
-        if any([s in response.headers['Cache-Control']
-                for s in ['no-cache', 'no-store']]):
-            return 0
-        match = cache_re.search(response.headers['Cache-Control'])
-        if match:
-            return int(match.group(1))
-        return 0
 
 
 class EVE(APIConnection):
@@ -441,8 +477,8 @@ class APIObject(object):
     def __init__(self, parent, connection):
         self._dict = {}
         self._response = {}
-        if 'content' in parent:
-            content = parent['content']
+        if isinstance(parent, APIResponse):
+            content = parent.content
             self._response = parent
         else:
             content = parent
@@ -481,9 +517,7 @@ class APIObject(object):
 
         When calling `x()['name']` return `self._response['name']` if present
         '''
-        if item in self._response:
-            return self._response[item]
-        raise AttributeError(item)
+        return self._response.__getitem__(item)
 
     def __call__(self, **kwargs):
         """carries out a CREST request

@@ -5,7 +5,7 @@ Created on Jun 27, 2016
 '''
 import sys
 from pycrest.eve import EVE, DictCache, APICache, FileCache, APIObject,\
-    MemcachedCache
+    MemcachedCache, APIResponse
 import httmock
 import pycrest
 import mock
@@ -216,6 +216,47 @@ class TestAuthedConnection(unittest.TestCase):
             self.authed()
 
 
+class TestAPIResponse(unittest.TestCase):
+
+    def setUp(self):
+        eve = EVE()
+        with httmock.HTTMock(*all_httmocks):
+            self.root = eve()
+
+    def test_content(self):
+        self.assertEqual(self.root._response.content, '')
+
+    def test_get_expires(self):
+        # No header at all
+        r = httmock.response(200, '{}'.encode('utf-8'))
+        self.assertEqual(self.root._response._get_expires(r.headers), 0)
+
+        # Cache-Control header with no-cache
+        r = httmock.response(status_code=200,
+                             content='{}'.encode('utf-8'),
+                             headers={'Cache-Control': 'no-cache'})
+        self.assertEqual(self.root._response._get_expires(r.headers), 0)
+
+        # Cache-Control header with no-store
+        r = httmock.response(status_code=200,
+                             content='{}'.encode('utf-8'),
+                             headers={'Cache-Control': 'no-store'})
+        self.assertEqual(self.root._response._get_expires(r.headers), 0)
+
+        # Cache-Control header with wrong content
+        r = httmock.response(status_code=200,
+                             content='{}'.encode('utf-8'),
+                             headers={'Cache-Control': 'no-way'})
+        self.assertEqual(self.root._response._get_expires(r.headers), 0)
+
+        # Cache-Control header with max-age=300
+        r = httmock.response(status_code=200,
+                             content='{}'.encode('utf-8'),
+                             headers={'Cache-Control': 'max-age=300'})
+        self.assertEqual(self.root._response._get_expires(r.headers), 300)
+
+
+
 class TestAPIConnection(unittest.TestCase):
 
     def setUp(self):
@@ -372,35 +413,6 @@ class TestAPIConnection(unittest.TestCase):
 
         with httmock.HTTMock(non_http_200):
             self.assertRaises(APIException, self.api)
-
-    def test_get_expires(self):
-        # No header at all
-        r = httmock.response(200, '{}'.encode('utf-8'))
-        self.assertEqual(self.api._get_expires(r), 0)
-
-        # Cache-Control header with no-cache
-        r = httmock.response(status_code=200,
-                             content='{}'.encode('utf-8'),
-                             headers={'Cache-Control': 'no-cache'})
-        self.assertEqual(self.api._get_expires(r), 0)
-
-        # Cache-Control header with no-store
-        r = httmock.response(status_code=200,
-                             content='{}'.encode('utf-8'),
-                             headers={'Cache-Control': 'no-store'})
-        self.assertEqual(self.api._get_expires(r), 0)
-
-        # Cache-Control header with wrong content
-        r = httmock.response(status_code=200,
-                             content='{}'.encode('utf-8'),
-                             headers={'Cache-Control': 'no-way'})
-        self.assertEqual(self.api._get_expires(r), 0)
-
-        # Cache-Control header with max-age=300
-        r = httmock.response(status_code=200,
-                             content='{}'.encode('utf-8'),
-                             headers={'Cache-Control': 'max-age=300'})
-        self.assertEqual(self.api._get_expires(r), 300)
 
     def test_session_mock(self):
         # Check default header
