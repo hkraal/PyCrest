@@ -297,6 +297,7 @@ class APIConnection(object):
     def post(self, resource, data={}):
         logger.debug('Posting resource %s (data=%s)', resource, data)
         res = self._session.post(resource, data=data)
+        print('POST reponse.text: "{0}"'.format(res.text))
         if res.status_code not in [200, 201]:
             raise APIException(
                 resource,
@@ -309,6 +310,7 @@ class APIConnection(object):
     def put(self, resource, data={}):
         logger.debug('Putting resource %s (data=%s)', resource, data)
         res = self._session.put(resource, data=data)
+        print('PUT reponse.text: "{0}"'.format(res.text))
         if res.status_code != 200:
             raise APIException(
                 resource,
@@ -321,6 +323,7 @@ class APIConnection(object):
     def delete(self, resource):
         logger.debug('Deleting resource %s', resource)
         res = self._session.delete(resource)
+        print('DELETE reponse.text: "{0}"'.format(res.text))
         if res.status_code != 200:
             raise APIException(
                 resource,
