@@ -45,8 +45,8 @@ class APICache(object):
     def _hash(self, data):
         h = hashlib.new('md5')
         h.update(pickle.dumps(data))
-        # prefix allows possibility of multiple applications
-        # sharing same keyspace
+        #prefix allows possibility of multiple applications 
+        #sharing same keyspace
         return 'pyc_' + h.hexdigest()
 
 
@@ -293,11 +293,10 @@ class APIConnection(object):
 
         return response
 
-    # post is not idempotent so there should be no caching
+    #post is not idempotent so there should be no caching
     def post(self, resource, data={}):
         logger.debug('Posting resource %s (data=%s)', resource, data)
         res = self._session.post(resource, data=data)
-        print('POST reponse.text: "{0}"'.format(res.text))
         if res.status_code not in [200, 201]:
             raise APIException(
                 resource,
@@ -306,11 +305,10 @@ class APIConnection(object):
                 )
         return {}
 
-    # put is not idempotent so there should be no caching
+    #put is not idempotent so there should be no caching
     def put(self, resource, data={}):
         logger.debug('Putting resource %s (data=%s)', resource, data)
         res = self._session.put(resource, data=data)
-        print('PUT reponse.text: "{0}"'.format(res.text))
         if res.status_code != 200:
             raise APIException(
                 resource,
@@ -319,11 +317,10 @@ class APIConnection(object):
                 )
         return {}
 
-    # delete is not idempotent so there should be no caching
+    #delete is not idempotent so there should be no caching
     def delete(self, resource):
         logger.debug('Deleting resource %s', resource)
         res = self._session.delete(resource)
-        print('DELETE reponse.text: "{0}"'.format(res.text))
         if res.status_code != 200:
             raise APIException(
                 resource,
